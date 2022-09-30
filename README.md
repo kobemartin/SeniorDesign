@@ -7,7 +7,7 @@ The software component will consist of two major parts: ESP32, AWS
 2. Amazon Web Services (AWS IOT Core, AWS S3, AWS Amplify, AWS Cloud Watch)
 
 # System Activity Diagram
-![alt text](https://github.com/kobemartin/SeniorDesign/SystemActivityDiagram.png?raw=true)
+![alt text](https://raw.githubusercontent.com/kobemartin/SeniorDesign/master/SystemActivityDiagram.png)
 
 
 
