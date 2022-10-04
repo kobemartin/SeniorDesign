@@ -3,27 +3,56 @@
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
 #include "WiFi.h"
+#include <LiquidCrystal_I2C.h>
  
+
+// set the LCD number of columns and rows
+int lcdColumns = 16;
+int lcdRows = 2;
+
+// set LCD address, number of columns and rows
+LiquidCrystal_I2C lcd(0x27, lcdColumns, lcdRows);  
+
+
 #define AWS_IOT_SUBSCRIBE_TOPIC "esp32/sub"
- 
 #define lamp 23
  
 WiFiClientSecure net = WiFiClientSecure();
 PubSubClient client(net);
+
+void scrollText(int row, String message, int delayTime, int lcdColumns) {
+  for (int i=0; i < lcdColumns; i++) {
+    message = " " + message; 
+  } 
+  message = message + " "; 
+  for (int pos = 0; pos < message.length(); pos++) {
+    lcd.setCursor(0, row);
+    lcd.print(message.substring(pos, pos + lcdColumns));
+    delay(delayTime);
+  }
+}
  
  
 void connectAWS()
 {
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
- 
+
   Serial.println("Connecting to Wi-Fi");
- 
+  
+  // set cursor to first column, first row
+  lcd.setCursor(0, 0);
+  // print message
+  lcd.print("Wi-Fi Connecting");
+
+  lcd.setCursor(0, 1);
   while (WiFi.status() != WL_CONNECTED)
   {
     delay(500);
+    lcd.print(".");
     Serial.print(".");
   }
+  lcd.clear();
  
   // Configure WiFiClientSecure to use the AWS IoT device credentials
   net.setCACert(AWS_CERT_CA);
@@ -37,12 +66,17 @@ void connectAWS()
   client.setCallback(messageHandler);
  
   Serial.println("Connecting to AWS IOT");
- 
+  lcd.setCursor(0, 0);
+  lcd.print("AWS Connecting");
+
+  lcd.setCursor(0, 1);
   while (!client.connect(THINGNAME))
   {
-    Serial.print(".");
     delay(100);
+    Serial.print(".");
+    lcd.print(".");
   }
+  lcd.clear();
  
   if (!client.connected())
   {
@@ -65,7 +99,11 @@ void messageHandler(char* topic, byte* payload, unsigned int length)
   StaticJsonDocument<200> doc;
   deserializeJson(doc, payload);
   const char* message = doc["message"];
-   Serial.println();
+
+  Serial.println();
+  Serial.print("--------------");
+  Serial.print(message);
+  Serial.print("--------------");
  
   for (int i = 0; i < length; i++) 
   {
@@ -92,6 +130,12 @@ void messageHandler(char* topic, byte* payload, unsigned int length)
 void setup()
 {
   Serial.begin(115200);
+  // initialize LCD
+  lcd.init();
+  // turn on LCD backlight                      
+  lcd.backlight();
+  
+
   connectAWS();
   pinMode (lamp, OUTPUT);
   digitalWrite(lamp, LOW);

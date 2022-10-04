@@ -1,0 +1,49 @@
+form {
+    text-align: center;
+}
+
+.form-control {
+    display: inline-block;
+}
+
+body {
+    text-align: center;
+}
+
+ol {
+    text-align: left;
+}
+
+#instructions, hr {
+    width: 70%;
+    margin: 0 auto;
+}
+
+.expandChildTable:before {
+    content: "+";
+    display: block;
+    cursor: pointer;
+}
+.expandChildTable.selected:before {
+    content: "-";
+}
+.childTableRow {
+    display: none;
+}
+.childTableRow table {
+    border: 2px solid #555;
+}
+
+.scrollBox {
+    overflow: scroll;
+    height: 500px;
+    width: 1100px;
+    margin-left: 10%;
+    margin-right: 10%;
+}
+
+.table {
+    width: 70%;
+    margin-left: 15%;
+    margin-right: 15%;
+}
