@@ -1,15 +1,18 @@
 function updateEvent() {
     let formData = new FormData(document.querySelector('form'))
-    let link = "https://ggst1z4j2i.execute-api.us-east-1.amazonaws.com/prod/esp32" +
+    let link = "https://ggst1z4j2i.execute-api.us-east-1.amazonaws.com/prod/esp32?operation=updateEvent&" +
         "?eventId=" + formData.get('eventId') +
         "&medication=" + formData.get('medication') +
         "&dayTime=" + formData.get('dayTime');
     fetch(link)
         .then(resp => resp.json())
-        .then(data => displayStartLogSearchOutput(data));
+        .then(data => updateEventResponse(data));
 }
 
-
+function updateEventResponse(data) {
+    console.log(data);
+    document.querySelector("output").innerHTML = "The event has been updated: " +  data['status'];
+}
 
 
 
