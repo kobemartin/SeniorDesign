@@ -9,6 +9,16 @@ function updateEvent() {
         .then(data => displayStartLogSearchOutput(data));
 }
 
+
+
+
+
+
+
+
+
+
+
 function startLogSearch() {
     let formData = new FormData(document.querySelector('form'))
     let link = "https://fn4v7y1ur9.execute-api.us-west-2.amazonaws.com/beta/" +
