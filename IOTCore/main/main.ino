@@ -5,7 +5,7 @@
 #include "WiFi.h"
 #include <LiquidCrystal_I2C.h>
 #include <Stepper.h>
-
+#include <HTTPClient.h>
 
 
 // set the LCD number of columns and rows
@@ -106,6 +106,7 @@ void connectAWS() {
   client.subscribe(AWS_IOT_SUBSCRIBE_TOPIC);
 
   Serial.println("AWS IoT Connected!");
+  return;
 }
 
 void buzzer() {
@@ -131,6 +132,16 @@ void buzzer() {
      delay(100);
   }
   ledcDetachPin(16);
+
+  return;
+}
+
+void dispenseEvent( ) {
+
+  buzzer();
+
+  myStepper.setSpeed(4);
+  myStepper.step(stepsPerRevolution);
 }
 
 
@@ -138,9 +149,12 @@ void messageHandler(char* topic, byte* payload, unsigned int length) {
   Serial.print("incoming: ");
   Serial.println(topic);
   
+  
 
   StaticJsonDocument<200> doc;
   deserializeJson(doc, payload);
+  // Serial.println("doc: ");
+  // Serial.println(doc)
   const char* message = doc["message"];
 
   lcd.clear();
@@ -149,13 +163,14 @@ void messageHandler(char* topic, byte* payload, unsigned int length) {
 
   Serial.println();
   Serial.print("--------------");
+  Serial.print(payload[0]);
+  Serial.print("--------------");
+  Serial.print(payload[1]);
+  Serial.print("--------------");
   Serial.print(message);
   Serial.print("--------------");
 
-  buzzer();
 
-  myStepper.setSpeed(4);
-  myStepper.step(stepsPerRevolution);
 
   // for (int i = 0; i < length; i++) {
   //   Serial.print((char)payload[i]);  // Pring payload content
@@ -173,14 +188,44 @@ void messageHandler(char* topic, byte* payload, unsigned int length) {
   //   digitalWrite(lamp, LOW);
   //   Serial.println("Lamp_State changed to LOW");
   // }
+  Serial.print("here");
   Serial.println();
+  return;
+}
+
+
+String httpGETRequest() {
+  HTTPClient http;
+
+  // Your IP address with path or Domain name with URL path 
+  http.begin("https://ggst1z4j2i.execute-api.us-east-1.amazonaws.com/prod/esp32?operation=getEvents");
+
+  // Send HTTP POST request
+  int httpResponseCode = http.GET();
+
+  String payload = "{}"; 
+
+  if (httpResponseCode>0) {
+    Serial.print("HTTP Response code: ");
+    Serial.println(httpResponseCode);
+    payload = http.getString();
+    Serial.println(payload);
+  }
+  else {
+    Serial.print("Error code: ");
+    Serial.println(httpResponseCode);
+  }
+  // Free resources
+  http.end();
+
+  return payload;
 }
 
 
 void setup() {
   Serial.begin(115200);
   
-  buzzer();
+  // buzzer();
   // initialize LCD
   lcd.init();
   // turn on LCD backlight
@@ -188,13 +233,18 @@ void setup() {
 
 
   connectAWS();
-  pinMode(lamp, OUTPUT);
-  digitalWrite(lamp, LOW);
+
+  httpGETRequest();
+  // pinMode(lamp, OUTPUT);
+  // digitalWrite(lamp, LOW);
 
   
 }
 
+
+
 void loop() {
   client.loop();
+  Serial.print("Main loop");
   delay(1000);
 }
