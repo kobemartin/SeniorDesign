@@ -16,13 +16,13 @@
         <br><br>
 
 <!-- INSTRUCTIONS -->
-        <div id="instructions">
+        <!-- <div id="instructions">
             <h4>Instructions</h4>
             <ol>
                 <li>ADD INSTRUCTIONS.</li>
             </ol>
         </div>
-        <br>
+        <br> -->
 
 <!--CONFIGURE DISPENSE EVENT-->
         <h2>Configure Dispense Events</h2>
@@ -30,7 +30,7 @@
         <form style="text-align:center">
             <div class="mb-3">
                 <label for="eventId">Event:</label>
-                <select id="eventId" name="fleeventIdet" class="form-control" style="width:100px">
+                <select id="eventId" name="eventId" class="form-control" style="width:100px" required>
                     <option value="1">1</option>
                     <option value="2">2</option>
                     <option value="3">3</option>
@@ -50,11 +50,11 @@
             </div>
             <div class="mb-3">
                 <label for="medication">Medication:</label>
-                <input type="text" id="medication" name="medication" placeholder="Advil, Vitamin C, etc." class="form-control" style="width:250px"/>
+                <input type="text" id="medication" name="medication" placeholder="Advil, Vitamin C, etc." class="form-control" style="width:250px" required/>
             </div>
             <div class="mb-3">
-                <label for="dayTime">Day/time of dispense event:</label>
-                <select id="dayTime" name="dayTime" class="form-control" style="width:100px">
+                <label for="day">Day/time of dispense event:</label>
+                <select id="day" name="day" class="form-control" style="width:100px" required>
                     <option value="Monday">Monday</option>
                     <option value="Tuesday">Tuesday</option>
                     <option value="Wednesday">Wednesday</option>
@@ -63,7 +63,7 @@
                     <option value="Saturday">Saturday</option>
                     <option value="Sunday">Sunday</option>
                 </select>
-                <input type="time" id="dayTime" name="dayTime" class="form-control" style="width:150px"/>
+                <input type="time" id="time" name="time" class="form-control" style="width:150px" required/>
                 <small></small>
             </div>
         </form>
@@ -72,8 +72,12 @@
         <output></output>
         <br>
         
+        <!-- <button onclick="getData()" class="btn btn-primary">Get Data</button> -->
 
-        <table class="table">
+        <table class="table" id="tableOutput">
+        </table>
+
+        <!-- <table class="table">
             <thead>
               <tr>
                 <th scope="col">Event #</th>
@@ -102,7 +106,7 @@
                 <td>@twitter</td>
               </tr>
             </tbody>
-          </table>
+          </table> -->
 
 
         <!-- <button onclick="getDispenseEvents()" class="btn btn-primary">Get Events</button> -->
