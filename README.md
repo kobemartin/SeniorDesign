@@ -22,3 +22,5 @@ The following instructions will be updated to document what needs to be done to 
 
 ## Major Updates
 (September 29, 2022) – Initial commit of ESP32 code for interaction with AWS IOT Core. This code allows AWS to trigger an event on the ESP32 via the MQTT protocol.
+
+(September 20, 2022) – ESP32 code can now invoke buzzer and motor on specific events. ESP32 can get data from AWS API. Webpage updated with user input form. Sends data using to AWS API. Website also gets data from AWS API and displays results on a HTML table.
