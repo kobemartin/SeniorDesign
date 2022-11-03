@@ -6,6 +6,7 @@
 #include <LiquidCrystal_I2C.h>
 #include <Stepper.h>
 #include <HTTPClient.h>
+#include "time.h"
 
 
 // set the LCD number of columns and rows
@@ -20,6 +21,7 @@ int freq = 2000;
 int channel = 0;
 int resolution = 8;
 
+bool lcdLock = false;
 
 
 
@@ -67,10 +69,21 @@ void connectAWS() {
   lcd.print("Wi-Fi Connecting");
 
   lcd.setCursor(0, 1);
+  int dotCount = 0;
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
-    lcd.print(".");
-    Serial.print(".");
+    if (dotCount < 16)
+    {
+      lcd.print(".");
+      Serial.print(".");
+      dotCount += 1;
+    } else {
+      lcd.clear();
+      lcd.print("Wi-Fi Connecting");
+      lcd.setCursor(0, 1);
+      dotCount = 0;
+    }
+    
   }
   lcd.clear();
 
@@ -137,15 +150,16 @@ void buzzer() {
 }
 
 void dispenseEvent( ) {
+  
 
   buzzer();
-
   myStepper.setSpeed(4);
   myStepper.step(stepsPerRevolution);
 }
 
 
 void messageHandler(char* topic, byte* payload, unsigned int length) {
+  httpGETRequest();
   Serial.print("incoming: ");
   Serial.println(topic);
   
@@ -157,6 +171,7 @@ void messageHandler(char* topic, byte* payload, unsigned int length) {
   // Serial.println(doc)
   const char* message = doc["message"];
 
+  lcdLock = true;
   lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print(message);
@@ -190,9 +205,65 @@ void messageHandler(char* topic, byte* payload, unsigned int length) {
   // }
   Serial.print("here");
   Serial.println();
+  sleep(10);
+  lcdLock = false;
   return;
 }
 
+String payload = "{}"; 
+
+struct event {
+  int eventID;
+  int day;
+  int hour;
+  int minute;
+  String medication;
+};
+
+event myEvents[14];
+
+
+void updateEvents(const StaticJsonDocument<2048>&  doc) {
+  for (int i = 0; i < 14; i++) {
+    Serial.println("hi");
+    String day;
+    String time;
+    String medication;
+    serializeJsonPretty(doc[String(i + 1)]["day"], day);
+    serializeJsonPretty(doc[String(i + 1)]["time"], time);
+    serializeJsonPretty(doc[String(i + 1)]["medication"], medication);
+    int dayInt = -1;
+    Serial.println(String(i) + " " + day);
+    if (day == "\"Monday\"") {
+      dayInt = 1;
+    } else if (day == "\"Tuesday\"") {
+      dayInt = 2;
+    } else if (day == "\"Wednesday\"") {
+      dayInt = 3;
+    } else if (day == "\"Thursday\"") {
+      dayInt = 4;
+    } else if (day == "\"Friday\"") {
+      dayInt = 5;
+    } else if (day == "\"Saturday\"") {
+      dayInt = 6;
+    } else if (day == "\"Sunday\"") {
+      dayInt = 7;
+    }
+    myEvents[i].medication = medication;
+    myEvents[i].day = dayInt;
+    myEvents[i].hour = time.substring(1,3).toInt();
+    myEvents[i].minute = time.substring(4,6).toInt();
+
+  }
+}
+
+void printEventObjects() {
+  Serial.println("START EVENT OBJECTS:");
+  for (int i; i < 14; i++) {
+    Serial.println("Event: " + String(i) + " day: " + String(myEvents[i].day) + " hour: " + String(myEvents[i].hour) + " minute: " + String(myEvents[i].minute) + " medication: " + String(myEvents[i].medication));
+  }
+  Serial.println("END EVENT OBJECTS:");
+}
 
 String httpGETRequest() {
   HTTPClient http;
@@ -203,13 +274,26 @@ String httpGETRequest() {
   // Send HTTP POST request
   int httpResponseCode = http.GET();
 
-  String payload = "{}"; 
+  // String payload = "{}"; 
+
+
 
   if (httpResponseCode>0) {
-    Serial.print("HTTP Response code: ");
+    Serial.println("\nPAYLOAD:");
+    Serial.print("\n\nHTTP Response code: ");
     Serial.println(httpResponseCode);
     payload = http.getString();
     Serial.println(payload);
+
+    Serial.println("\nJSON:");
+    StaticJsonDocument<2048> doc; 
+    deserializeJson(doc, payload);
+    serializeJsonPretty(doc, Serial);
+    updateEvents(doc);
+    printEventObjects();
+
+
+
   }
   else {
     Serial.print("Error code: ");
@@ -217,6 +301,7 @@ String httpGETRequest() {
   }
   // Free resources
   http.end();
+  Serial.println("\n\n");
 
   return payload;
 }
@@ -241,10 +326,69 @@ void setup() {
   
 }
 
+void displayTime() {
+;
+}
+
+const char* ntpServer = "pool.ntp.org";
+const long  gmtOffset_sec = -5 * 3600;
+const int   daylightOffset_sec = 3600;
+struct tm timeinfo;
+const char* day = "Unknown";
+
+void printLocalTime()
+{
+  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+  if(!getLocalTime(&timeinfo)){
+    Serial.println("Failed to obtain time");
+    return;
+  }
+  if (!lcdLock) {
+    Serial.println(&timeinfo, "PRINT1: %A, %B %d %Y %H:%M:%S");
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print(&timeinfo, "%B %d, %Y");
+    lcd.setCursor(0, 1);
+    lcd.print(&timeinfo, "%H:%M:%S");
+    day = (&timeinfo, "%B %d, %Y");
+    Serial.print("__________");
+    Serial.print("PRINT2");
+    Serial.print(timeinfo.tm_wday);
+    Serial.print(day);
+    Serial.print("e__________");  
+  }
+  
+}
+
+void checkForEvent()
+{
+  int day = timeinfo.tm_wday;
+  int hour = timeinfo.tm_hour;
+  int minute = timeinfo.tm_min;
+  Serial.println("_____S-----_____");
+  Serial.println("Hi: day: " + String(day) + " hour: " + String(hour) + " minute: " +  String(minute));
+  Serial.println("_____-----_____");
+  for (int i; i < 14; i++) {
+    if (day == myEvents[i].day && hour == myEvents[i].hour && minute == myEvents[i].minute) {
+      lcdLock = true;
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("Time to take:");
+      lcd.setCursor(0,1);
+      lcd.print(myEvents[i].medication);
+      Serial.println("EVENT TRIGGERED!!!");
+      dispenseEvent( );
+      lcdLock = false;
+    }
+  }
+}
 
 
 void loop() {
   client.loop();
   Serial.print("Main loop");
+  printLocalTime();
+  checkForEvent();
   delay(1000);
+  
 }
