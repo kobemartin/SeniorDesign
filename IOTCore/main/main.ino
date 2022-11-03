@@ -344,18 +344,18 @@ void printLocalTime()
     return;
   }
   if (!lcdLock) {
-    Serial.println(&timeinfo, "PRINT1: %A, %B %d %Y %H:%M:%S");
+    // Serial.println(&timeinfo, "PRINT1: %A, %B %d %Y %H:%M:%S");
     lcd.clear();
     lcd.setCursor(0, 0);
     lcd.print(&timeinfo, "%B %d, %Y");
     lcd.setCursor(0, 1);
     lcd.print(&timeinfo, "%H:%M:%S");
-    day = (&timeinfo, "%B %d, %Y");
-    Serial.print("__________");
-    Serial.print("PRINT2");
-    Serial.print(timeinfo.tm_wday);
-    Serial.print(day);
-    Serial.print("e__________");  
+    // day = (&timeinfo, "%B %d, %Y");
+    // Serial.print("__________");
+    // Serial.print("PRINT2");
+    // Serial.print(timeinfo.tm_wday);
+    // Serial.print(day);
+    // Serial.print("e__________");  
   }
   
 }
@@ -365,9 +365,9 @@ void checkForEvent()
   int day = timeinfo.tm_wday;
   int hour = timeinfo.tm_hour;
   int minute = timeinfo.tm_min;
-  Serial.println("_____S-----_____");
-  Serial.println("Hi: day: " + String(day) + " hour: " + String(hour) + " minute: " +  String(minute));
-  Serial.println("_____-----_____");
+  // Serial.println("_____S-----_____");
+  Serial.println("day: " + String(day) + " hour: " + String(hour) + " minute: " +  String(minute));
+  // Serial.println("_____-----_____");
   for (int i; i < 14; i++) {
     if (day == myEvents[i].day && hour == myEvents[i].hour && minute == myEvents[i].minute) {
       lcdLock = true;
@@ -375,10 +375,13 @@ void checkForEvent()
       lcd.setCursor(0, 0);
       lcd.print("Time to take:");
       lcd.setCursor(0,1);
-      lcd.print(myEvents[i].medication);
+      lcd.print(myEvents[i].medication.substring(1,myEvents[i].medication.length() - 1));
       Serial.println("EVENT TRIGGERED!!!");
       dispenseEvent( );
       lcdLock = false;
+      while (minute == myEvents[i].minute) {
+        ;
+      }
     }
   }
 }
@@ -386,7 +389,7 @@ void checkForEvent()
 
 void loop() {
   client.loop();
-  Serial.print("Main loop");
+  // Serial.print("Main loop");
   printLocalTime();
   checkForEvent();
   delay(1000);
