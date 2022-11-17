@@ -8,6 +8,27 @@
 #include <HTTPClient.h>
 #include "time.h"
 
+// #define LED 33
+#define BUTTON 33
+hw_timer_t *My_timer = NULL;
+void IRAM_ATTR onTimer(){
+  Serial.println("Checking for event");
+  // checkForEvent();
+  // digitalWrite(LED, !digitalRead(LED));
+  // // digitalWrite(LED, HIGH);
+  // if (digitalRead(LED) == HIGH) {
+  //   Serial.println("Interrupt high");
+  // } else {
+  //   Serial.println("Interrupt low");
+  // }
+
+  // if (digitalRead(BUTTON) == LOW) {
+  //   Serial.println("Button pressed");
+  // } else {
+  //   Serial.println("Button NOT pressed");
+  // }
+    
+}
 
 // set the LCD number of columns and rows
 int lcdColumns = 16;
@@ -25,7 +46,7 @@ bool lcdLock = false;
 
 
 
-const int stepsPerRevolution = 256;  // change this to fit the number of steps per revolution
+const int stepsPerRevolution = 2048;  // change this to fit the number of steps per revolution
 
 // ULN2003 Motor Driver Pins
 #define IN1 19
@@ -151,10 +172,14 @@ void buzzer() {
 
 void dispenseEvent( ) {
   
-
-  buzzer();
-  myStepper.setSpeed(4);
+  Serial.println("Dispensing");
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Dispensing");
+  Serial.println("Here3");
+  myStepper.setSpeed(10);
   myStepper.step(stepsPerRevolution);
+  Serial.println("Here4");
 }
 
 
@@ -185,27 +210,10 @@ void messageHandler(char* topic, byte* payload, unsigned int length) {
   Serial.print(message);
   Serial.print("--------------");
 
-
-
-  // for (int i = 0; i < length; i++) {
-  //   Serial.print((char)payload[i]);  // Pring payload content
-  // }
-  // char led = (char)payload[62];  // Extracting the controlling command from the Payload to Controlling LED from AWS
-  // Serial.print("Command: ");
-  // Serial.println(led);
-
-  // if (led == 49)  // 49 is the ASCI value of 1
-  // {
-  //   digitalWrite(lamp, HIGH);
-  //   Serial.println("Lamp_State changed to HIGH");
-  // } else if (led == 48)  // 48 is the ASCI value of 0
-  // {
-  //   digitalWrite(lamp, LOW);
-  //   Serial.println("Lamp_State changed to LOW");
-  // }
   Serial.print("here");
   Serial.println();
-  sleep(10);
+  delay(5000);
+  lcd.clear();
   lcdLock = false;
   return;
 }
@@ -306,30 +314,6 @@ String httpGETRequest() {
   return payload;
 }
 
-
-void setup() {
-  Serial.begin(115200);
-  
-  // buzzer();
-  // initialize LCD
-  lcd.init();
-  // turn on LCD backlight
-  lcd.backlight();
-
-
-  connectAWS();
-
-  httpGETRequest();
-  // pinMode(lamp, OUTPUT);
-  // digitalWrite(lamp, LOW);
-
-  
-}
-
-void displayTime() {
-;
-}
-
 const char* ntpServer = "pool.ntp.org";
 const long  gmtOffset_sec = -5 * 3600;
 const int   daylightOffset_sec = 3600;
@@ -344,18 +328,11 @@ void printLocalTime()
     return;
   }
   if (!lcdLock) {
-    // Serial.println(&timeinfo, "PRINT1: %A, %B %d %Y %H:%M:%S");
-    lcd.clear();
+    // lcd.clear();
     lcd.setCursor(0, 0);
-    lcd.print(&timeinfo, "%B %d, %Y");
+    lcd.print(&timeinfo, "%B %d");
     lcd.setCursor(0, 1);
     lcd.print(&timeinfo, "%H:%M:%S");
-    // day = (&timeinfo, "%B %d, %Y");
-    // Serial.print("__________");
-    // Serial.print("PRINT2");
-    // Serial.print(timeinfo.tm_wday);
-    // Serial.print(day);
-    // Serial.print("e__________");  
   }
   
 }
@@ -377,15 +354,43 @@ void checkForEvent()
       lcd.setCursor(0,1);
       lcd.print(myEvents[i].medication.substring(1,myEvents[i].medication.length() - 1));
       Serial.println("EVENT TRIGGERED!!!");
+      buzzer();
+      while (digitalRead(BUTTON) == HIGH) {
+        delay(1000); //Wait for button press
+      }
+      Serial.println("here1");
       dispenseEvent( );
       lcdLock = false;
-      while (minute == myEvents[i].minute) {
-        ;
+      Serial.println("here6");
+      lcd.clear();
+      while (minute == myEvents[i].minute) { //Wait for minute to end
+        delay(1000); 
+        printLocalTime();
+        minute = timeinfo.tm_min;
       }
+      Serial.println("here2");
     }
   }
 }
 
+void setup() {
+  // Start enable timer interrupt
+  pinMode(BUTTON, INPUT_PULLUP); //Setup button
+  // pinMode(LED, OUTPUT);
+  // My_timer = timerBegin(0, 80, true);
+  // timerAttachInterrupt(My_timer, &onTimer, true);
+  // timerAlarmWrite(My_timer, 60000000, true);
+  // timerAlarmEnable(My_timer); //Just Enable
+  // End enable timer interrupt
+
+  Serial.begin(115200);
+
+  // initialize LCD
+  lcd.init();
+  lcd.backlight();
+  connectAWS(); //ADD BACK
+  httpGETRequest(); //ADD BACK
+}
 
 void loop() {
   client.loop();
