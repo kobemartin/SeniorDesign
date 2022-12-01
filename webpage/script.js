@@ -44,11 +44,13 @@ function generate_table2(data) {
 
     // Display logs in table body
     const tblBody = document.createElement("tbody");
+    console.log("Here");
     console.log(data);
-    console.log(data[1]);
-    console.log(data[1].day);
+    console.log(Object.keys(data).length);
+    // console.log(data[1]);
+    // console.log(data[1].day);
     // data = JSON.parse(data)
-    for (let i = 1; i < 15; i++) {
+    for (let i = 1; i < Object.keys(data).length + 1; i++) {
         // Create new row
         let row = document.createElement("tr");
 
